@@ -20,14 +20,13 @@ https://www.kaggle.com/datasets/ellimaaac/gaming-mouse-specs/data
 ```bash
    # Windows
    myenv\Scripts\activate
-# Linux/Mac
    # Linux/Mac
    source myenv/bin/activate
 ```
 
 # ติดตั้งไลบรารี
 ```bash
-   pip install pandas scikit-learn plotly opendatasets numpy
+   pip install pandas scikit-learn plotly numpy
 
 ```
 # stop program
