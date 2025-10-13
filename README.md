@@ -16,20 +16,18 @@ https://www.kaggle.com/datasets/ellimaaac/gaming-mouse-specs/data
    python -m venv myenv
 ```
 
-# เปิดใช้งาน venv
 # Windows
 ```bash
+   # Windows
    myenv\Scripts\activate
-```
 # Linux/Mac
-```bash
+   # Linux/Mac
    source myenv/bin/activate
 ```
 
 # ติดตั้งไลบรารี
 ```bash
    pip install pandas scikit-learn plotly opendatasets numpy
-=
 
 ```
 # stop program
