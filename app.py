@@ -103,9 +103,11 @@ def process_mouse():
 # PCA details page
 @app.route('/pca-details-page')
 def pca_details_page():
-    name = request.args.get('name','')
+    
+    my_mouse_input = request.args.get('my_mouse_collection','')
     features = request.args.get('features','')
-    selected_features = features.split(',') if features else []
+    selected_features = [f for f in features.split(',') if f in df_copy.columns]
+    my_mouse_collection = [x.strip() for x in my_mouse_input.split(',') if x.strip()]
 
     if not selected_features:
         return "<p>⚠️ No features selected.</p>"
@@ -121,7 +123,8 @@ def pca_details_page():
     df_pca['Model']=df_copy['Model']
     df_pca['Brand']=df_copy['Brand']
 
-    my_mouse_collection=['Viper Mini Signature Edition','MAD R Major','Susanto-X','Y2 Pro']
+   
+
     df_my = df_pca[df_pca['Model'].isin(my_mouse_collection)]
     ideal_profile=df_my[['PC1','PC2']].mean().values
     df_pca['Distance_to_Ideal']=np.linalg.norm(df_pca[['PC1','PC2']].values - ideal_profile, axis=1)

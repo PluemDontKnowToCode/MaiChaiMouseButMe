@@ -283,8 +283,9 @@ document.getElementById('viewPCA').onclick = () => {
     form.querySelectorAll('input[name="features"]:checked').forEach(f => features.push(f.value));
     const featuresStr = encodeURIComponent(features.join(','));
     const collectionStr = encodeURIComponent(myCollection.join(','));
-    window.open(`/pca-details-page?name=${encodeURIComponent(nameInput.value)}&features=${featuresStr}&collection=${collectionStr}`, '_blank');
+    window.open(`/pca-details-page?name=${encodeURIComponent(nameInput.value)}&features=${featuresStr}&my_mouse_collection=${collectionStr}`, '_blank');
 };
+
 
 };
 
