@@ -10,29 +10,29 @@ https://www.kaggle.com/datasets/ellimaaac/gaming-mouse-specs/data
    cd MaiChaiMouseButMe
 ```
 # Run app
-## build venv(Not important)
+## build venv (Not important)
 
 ```bash
    python -m venv myenv
 ```
 
-## runvenv
+## run venv
 ```bash
    # Windows
    myenv\Scripts\activate
    # Linux/Mac
    source myenv/bin/activate
 ```
-## Install lib
+## Install lib (important)
 ```bash
    pip install pandas scikit-learn plotly numpy flask jupyter notebook
 
 ```
-## run program 
+## run program (important)
 ```bash
    python app.py
 ```
-## stop program
+## stop venv
 ```bash
    # linux
    deactivate
