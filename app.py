@@ -63,11 +63,11 @@ def add_mouse():
 # Process PCA + Top 5 recommendations
 @app.route('/process', methods=['POST'])
 def process_mouse():
-    name = request.form.get('name')
+    name = request.form.get('name','')
     selected_features = request.form.getlist('features')
     existing_features = [f for f in selected_features if f in df_copy.columns]
     if not existing_features:
-        return jsonify({'result':'⚠️ No features selected'})
+        return jsonify({'result':'⚠️ ไม่ได้เลือกคุณสมบัติใดๆ'})
 
     df_features = df_copy[existing_features].copy()
     df_imputed = pd.DataFrame(SimpleImputer(strategy='mean').fit_transform(df_features),
@@ -77,19 +77,28 @@ def process_mouse():
     pca = PCA(n_components=2)
     pcs = pca.fit_transform(df_scaled)
     df_pca = pd.DataFrame(pcs, columns=['PC1','PC2'])
-    df_pca['Model']=df_copy['Model']
-    df_pca['Brand']=df_copy['Brand']
+    df_pca['Model'] = df_copy['Model']
+    df_pca['Brand'] = df_copy['Brand']
 
-    my_mouse_collection=['Viper Mini Signature Edition','MAD R Major','Susanto-X','Y2 Pro']
+    # ใช้ input ของผู้ใช้แทน collection แบบคงที่
+    my_mouse_input = request.form.get('my_mouse_collection', '')
+    my_mouse_collection = [x.strip() for x in my_mouse_input.split(',') if x.strip()]
+
+    if not my_mouse_collection:
+        return jsonify({'result':'⚠️ ไม่พบเมาส์ในคลังสำหรับคำนวณโปรไฟล์'})
+
     df_my = df_pca[df_pca['Model'].isin(my_mouse_collection)]
     if df_my.empty:
-        return jsonify({'result':'ไม่พบข้อมูลเมาส์ในคลังสำหรับคำนวณโปรไฟล์'})
+        return jsonify({'result':'⚠️ ไม่พบเมาส์ที่คุณเลือกใน dataset'})
 
-    ideal_profile=df_my[['PC1','PC2']].mean().values
-    df_pca['Distance_to_Ideal']=np.linalg.norm(df_pca[['PC1','PC2']].values - ideal_profile, axis=1)
-    recommendations=df_pca.sort_values('Distance_to_Ideal').head(5)
-    result=recommendations[['Model','Brand','Distance_to_Ideal']].to_dict(orient='records')
+    ideal_profile = df_my[['PC1','PC2']].mean().values
+    df_pca['Distance_to_Ideal'] = np.linalg.norm(df_pca[['PC1','PC2']].values - ideal_profile, axis=1)
+
+    recommendations = df_pca.sort_values('Distance_to_Ideal').head(5)
+    result = recommendations[['Model','Brand','Distance_to_Ideal']].to_dict(orient='records')
+
     return jsonify({'name':name,'selected_features':selected_features,'recommendations':result})
+
 
 # PCA details page
 @app.route('/pca-details-page')
