@@ -129,14 +129,16 @@ def pca_details_page():
 
     table_data = df_pca.sort_values('Distance_to_Ideal').to_dict(orient='records')
     
-    # เตรียมข้อมูลสำหรับพล็อตกราฟ
-    all_mice_data = df_pca[['PC1', 'PC2', 'Model', 'Brand']].to_dict(orient='records')
+    data_by_brand = {}
     ideal_profile_data = ideal_profile.tolist()
+    for brand, group in df_pca.groupby('Brand'):
+        data_by_brand[brand] = group[['PC1', 'PC2', 'Model']].to_dict(orient='records')
+    
 
     return render_template(
        'plot.html', 
         table_rows=table_data,
-        all_mice_json=all_mice_data, 
+        all_mice_json=data_by_brand,  
         ideal_profile_json=ideal_profile_data) 
 
 
