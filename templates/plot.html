@@ -4,117 +4,83 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ผลการวิเคราะห์ PCA</title>
-    <!-- 1. เรียกใช้ไลบรารี Plotly.js สำหรับวาดกราฟ -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    
-    <!-- 2. ตกแต่งหน้าเว็บให้อ่านง่ายและดูสวยงาม -->
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            padding: 20px 40px;
-            color: #333;
-            background-color: #f9f9f9;
-        }
-        h1, h2 {
-            color: #1a1a1a;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-        table {
-            border-collapse: collapse;
-            margin-top: 20px;
-            width: 100%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-        }
-        th {
-            background-color: #f8f8f8;
-            font-weight: 600;
-        }
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        tr:hover {
-            background-color: #e9e9e9;
-        }
-        #myDiv {
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; padding: 20px 40px; color: #333; background-color: #f9f9f9; }
+        h1, h2 { color: #1a1a1a; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        table { border-collapse: collapse; margin-top: 20px; width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f8f8f8; font-weight: 600; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
     </style>
 </head>
 <body>
     <h1>ผลการวิเคราะห์ PCA ของข้อมูลเมาส์</h1>
     <p>กราฟนี้แสดงการกระจายของเมาส์ต่างๆ โดยใช้ 2 แกนคุณลักษณะหลักที่ได้จากการวิเคราะห์ PCA</p>
-
-    <!-- 3. สร้าง "ผืนผ้าใบ" สำหรับวาดกราฟ -->
     <div id="myDiv" style="width:100%; max-width: 900px; height:600px;"></div>
     
-    <!-- 4. ส่วนของ JavaScript ที่จะรับข้อมูลจาก Python และวาดกราฟ -->
     <script>
-        // รับข้อมูล JSON ที่ Python ส่งมาผ่าน render_template
-        // ฟิลเตอร์ |tojson จะช่วยแปลงข้อมูลให้ปลอดภัยสำหรับนำไปใช้ใน JavaScript
-        const allMiceData = {{ all_mice_json | tojson }};
+        //hash 
+        function stringToColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const hue = (hash * 137.508) % 360;
+            return `hsl(${hue}, 80%, 65%)`; 
+        }
+
+        const dataByBrand = {{ all_mice_json | tojson }};
         const idealProfile = {{ ideal_profile_json | tojson }};
 
-        // Trace สำหรับเมาส์ทุกตัว (จุดสีฟ้า)
-        const traceAllMice = {
-            x: allMiceData.map(mouse => mouse.PC1),
-            y: allMiceData.map(mouse => mouse.PC2),
-            text: allMiceData.map(mouse => `${mouse.Model} (${mouse.Brand})`), // ข้อความเมื่อเอาเมาส์ไปชี้
-            mode: 'markers',
-            type: 'scatter',
-            name: 'All Mice',
-            marker: { 
-                size: 10, 
-                color: 'rgba(0, 123, 255, 0.7)' 
-            }
-        };
+        const data = [];
 
-        // Trace สำหรับ "Ideal Profile" (ดาวสีแดง)
+        for (const brand in dataByBrand) {
+            const miceForBrand = dataByBrand[brand];
+            
+            const trace = {
+                x: miceForBrand.map(mouse => mouse.PC1),
+                y: miceForBrand.map(mouse => mouse.PC2),
+                text: miceForBrand.map(mouse => mouse.Model),
+                mode: 'markers',
+                type: 'scatter',
+                name: brand, 
+                marker: {
+                    size: 11,
+                    color: stringToColor(brand) 
+                }
+            };
+            data.push(trace);
+        }
+
         const traceIdealProfile = {
             x: [idealProfile[0]],
             y: [idealProfile[1]],
-            mode: 'markers',
-            type: 'scatter',
-            name: 'Ideal Profile',
+            mode: 'markers', type: 'scatter', name: 'Ideal Profile',
             marker: { 
-                symbol: 'star', 
-                color: 'red', 
-                size: 20,
+                symbol: 'star', color: 'red', size: 20,
                 line: { color: 'black', width: 2 }
             }
         };
+        data.push(traceIdealProfile);
 
-        const data = [traceAllMice, traceIdealProfile];
+      
         const layout = {
-            title: 'การกระจายของเมาส์ในแกน PCA',
+            title: 'การกระจายของเมาส์ในแกน PCA (แยกตามยี่ห้อ)',
             xaxis: { title: 'แกนคุณลักษณะที่ 1 (PC1)' },
             yaxis: { title: 'แกนคุณลักษณะที่ 2 (PC2)' },
-            hovermode: 'closest' // ทำให้แสดงข้อมูลจุดที่ใกล้ที่สุด
+            hovermode: 'closest'
         };
 
-        // สั่งให้ Plotly วาดกราฟลงใน 'myDiv'
         Plotly.newPlot('myDiv', data, layout);
     </script>
     
     <h2>ตารางข้อมูลรายละเอียด</h2>
     <table>
         <thead>
-            <tr>
-                <th>Model</th>
-                <th>Brand</th>
-                <th>PC1</th>
-                <th>PC2</th>
-                <th>Distance to Ideal</th>
-            </tr>
+            <tr><th>Model</th><th>Brand</th><th>PC1</th><th>PC2</th><th>Distance to Ideal</th></tr>
         </thead>
         <tbody>
-            <!-- 5. ใช้ Loop ของ Jinja2 เพื่อสร้างแถวในตารางจากข้อมูลที่ Python ส่งมา -->
             {% for row in table_rows %}
             <tr>
                 <td>{{ row.Model }}</td>
