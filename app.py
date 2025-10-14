@@ -4,6 +4,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.decomposition import PCA
 import numpy as np
+import json
 
 app = Flask(__name__)
 
@@ -116,11 +117,20 @@ def pca_details_page():
     ideal_profile=df_my[['PC1','PC2']].mean().values
     df_pca['Distance_to_Ideal']=np.linalg.norm(df_pca[['PC1','PC2']].values - ideal_profile, axis=1)
 
-    html="<h2>PCA Details</h2><table border='1' cellpadding='5'><tr><th>Model</th><th>Brand</th><th>PC1</th><th>PC2</th><th>Distance to Ideal</th></tr>"
-    for _,row in df_pca.iterrows():
-        html+=f"<tr><td>{row['Model']}</td><td>{row['Brand']}</td><td>{row['PC1']:.4f}</td><td>{row['PC2']:.4f}</td><td>{row['Distance_to_Ideal']:.4f}</td></tr>"
-    html+="</table>"
-    return html
+
+    table_data = df_pca.sort_values('Distance_to_Ideal').to_dict(orient='records')
+    
+    # เตรียมข้อมูลสำหรับพล็อตกราฟ
+    all_mice_data = df_pca[['PC1', 'PC2', 'Model', 'Brand']].to_dict(orient='records')
+    ideal_profile_data = ideal_profile.tolist()
+
+    return render_template(
+       'plot.html', 
+        table_rows=table_data,
+        all_mice_json=all_mice_data, 
+        ideal_profile_json=ideal_profile_data) 
+
+
 
 if __name__=='__main__':
     app.run(debug=True)
