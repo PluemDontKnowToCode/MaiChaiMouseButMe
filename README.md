@@ -35,9 +35,14 @@ https://www.kaggle.com/datasets/ellimaaac/gaming-mouse-specs/data
    run run.bat
    click Run -> Run All Cells
 ```
-
+# รัน Jupyter Notebook
+```bash
+   # linux
+   jupyter notebook main.ipynb
+```
 
 # stop program
 ```bash
+   # linux
    deactivate
 ```
