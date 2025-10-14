@@ -7,73 +7,120 @@ import numpy as np
 
 app = Flask(__name__)
 
-# --- Global Variables ---
-features = [
-    'DPI',
-    'Polling rate (Hz)',
-    'Weight (grams)',
-    'Length (mm)',
-    'Width (mm)',
-    'Height (mm)',
-    'Side buttons'
-]
-
-# โหลดข้อมูลเริ่มต้น
+# โหลด dataset และทำ copy สำหรับแก้ไข
 df = pd.read_csv('2025_09_06_MousedB.csv', sep=';')
+df_copy = df.copy()
 
+# หน้าแรก
 @app.route('/')
 def index():
+    features = ['DPI', 'Polling rate (Hz)', 'Weight (grams)',
+                'Length (mm)', 'Width (mm)', 'Height (mm)', 'Side buttons']
     return render_template('index.html', features=features)
 
+# Search suggestions
+@app.route('/search')
+def search_mouse():
+    query = request.args.get('query', '').strip().lower()
+    if not query:
+        return jsonify({'error':'⚠️ Please enter a search term'})
+    mask = (df_copy['Model'].str.lower().str.contains(query, na=False) |
+            df_copy['Brand'].str.lower().str.contains(query, na=False))
+    results = df_copy[mask]
+    if results.empty:
+        return jsonify({'message':'❌ No matching mouse found'})
+    return jsonify(results[['Model','Brand']].to_dict(orient='records'))
+
+# Add new mouse
+@app.route('/add', methods=['POST'])
+def add_mouse():
+    global df_copy
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({'error':'No data received'}), 400
+
+    required_cols = ['Model','Brand','DPI','Polling rate (Hz)',
+                     'Weight (grams)','Length (mm)','Width (mm)',
+                     'Height (mm)','Side buttons']
+
+    for col in required_cols:
+        if col not in data or str(data[col]).strip()=='':
+            return jsonify({'error':f'Missing field: {col}'}), 400
+
+    numeric_cols = ['DPI','Polling rate (Hz)','Weight (grams)',
+                    'Length (mm)','Width (mm)','Height (mm)','Side buttons']
+    for col in numeric_cols:
+        try: data[col]=float(data[col])
+        except ValueError:
+            return jsonify({'error':f'Invalid number format for {col}'}), 400
+
+    new_row = pd.DataFrame([data])
+    df_copy = pd.concat([df_copy,new_row], ignore_index=True)
+    df_copy.to_csv('mouse_data_copy.csv', sep=';', index=False)
+    return jsonify({'success':f"✅ Added '{data['Model']}' to dataset copy!"})
+
+# Process PCA + Top 5 recommendations
 @app.route('/process', methods=['POST'])
 def process_mouse():
     name = request.form.get('name')
     selected_features = request.form.getlist('features')
+    existing_features = [f for f in selected_features if f in df_copy.columns]
+    if not existing_features:
+        return jsonify({'result':'⚠️ No features selected'})
 
-    # ใช้ข้อมูล df ที่โหลดไว้ทำการวิเคราะห์
-    existing_features = [f for f in selected_features if f in df.columns]
-    df_features = df[existing_features].copy()
-
-    # จัดการ Missing Values
-    imputer = SimpleImputer(strategy='mean')
-    df_imputed = pd.DataFrame(imputer.fit_transform(df_features), columns=existing_features)
-
-    # สเกลข้อมูล
-    scaler = StandardScaler()
-    df_scaled = pd.DataFrame(scaler.fit_transform(df_imputed), columns=existing_features)
-
-    # ทำ PCA
+    df_features = df_copy[existing_features].copy()
+    df_imputed = pd.DataFrame(SimpleImputer(strategy='mean').fit_transform(df_features),
+                              columns=existing_features)
+    df_scaled = pd.DataFrame(StandardScaler().fit_transform(df_imputed),
+                             columns=existing_features)
     pca = PCA(n_components=2)
-    principal_components = pca.fit_transform(df_scaled)
+    pcs = pca.fit_transform(df_scaled)
+    df_pca = pd.DataFrame(pcs, columns=['PC1','PC2'])
+    df_pca['Model']=df_copy['Model']
+    df_pca['Brand']=df_copy['Brand']
 
-    df_pca = pd.DataFrame(principal_components, columns=['PC1', 'PC2'])
-    df_pca['Model'] = df['Model']
-    df_pca['Brand'] = df['Brand']
+    my_mouse_collection=['Viper Mini Signature Edition','MAD R Major','Susanto-X','Y2 Pro']
+    df_my = df_pca[df_pca['Model'].isin(my_mouse_collection)]
+    if df_my.empty:
+        return jsonify({'result':'ไม่พบข้อมูลเมาส์ในคลังสำหรับคำนวณโปรไฟล์'})
 
-    # สมมติว่าผู้ใช้มีเมาส์ในคลัง (test)
-    my_mouse_collection = ['Viper Mini Signature Edition', 'MAD R Major', 'Susanto-X', 'Y2 Pro']
-    df_my_collection = df_pca[df_pca['Model'].isin(my_mouse_collection)]
+    ideal_profile=df_my[['PC1','PC2']].mean().values
+    df_pca['Distance_to_Ideal']=np.linalg.norm(df_pca[['PC1','PC2']].values - ideal_profile, axis=1)
+    recommendations=df_pca.sort_values('Distance_to_Ideal').head(5)
+    result=recommendations[['Model','Brand','Distance_to_Ideal']].to_dict(orient='records')
+    return jsonify({'name':name,'selected_features':selected_features,'recommendations':result})
 
-    if df_my_collection.empty:
-        return jsonify({'result': f'ไม่พบข้อมูลเมาส์ในคลังสำหรับคำนวณโปรไฟล์'})
+# PCA details page
+@app.route('/pca-details-page')
+def pca_details_page():
+    name = request.args.get('name','')
+    features = request.args.get('features','')
+    selected_features = features.split(',') if features else []
 
-    # คำนวณโปรไฟล์ในอุดมคติ
-    ideal_mouse_profile = df_my_collection[['PC1', 'PC2']].mean().values
+    if not selected_features:
+        return "<p>⚠️ No features selected.</p>"
 
-    # คำนวณระยะห่างจากเมาส์แต่ละตัว
-    distances = np.linalg.norm(df_pca[['PC1', 'PC2']].values - ideal_mouse_profile, axis=1)
-    df_pca['Distance_to_Ideal'] = distances
+    df_features = df_copy[selected_features].copy()
+    df_imputed = pd.DataFrame(SimpleImputer(strategy='mean').fit_transform(df_features),
+                              columns=selected_features)
+    df_scaled = pd.DataFrame(StandardScaler().fit_transform(df_imputed),
+                             columns=selected_features)
+    pca = PCA(n_components=2)
+    pcs = pca.fit_transform(df_scaled)
+    df_pca = pd.DataFrame(pcs, columns=['PC1','PC2'])
+    df_pca['Model']=df_copy['Model']
+    df_pca['Brand']=df_copy['Brand']
 
-    # เมาส์ที่ใกล้เคียงที่สุด
-    recommendations = df_pca.sort_values('Distance_to_Ideal', ascending=True).head(5)
-    result = recommendations[['Model', 'Brand', 'Distance_to_Ideal']].to_dict(orient='records')
+    my_mouse_collection=['Viper Mini Signature Edition','MAD R Major','Susanto-X','Y2 Pro']
+    df_my = df_pca[df_pca['Model'].isin(my_mouse_collection)]
+    ideal_profile=df_my[['PC1','PC2']].mean().values
+    df_pca['Distance_to_Ideal']=np.linalg.norm(df_pca[['PC1','PC2']].values - ideal_profile, axis=1)
 
-    return jsonify({
-        'name': name,
-        'selected_features': selected_features,
-        'recommendations': result
-    })
+    html="<h2>PCA Details</h2><table border='1' cellpadding='5'><tr><th>Model</th><th>Brand</th><th>PC1</th><th>PC2</th><th>Distance to Ideal</th></tr>"
+    for _,row in df_pca.iterrows():
+        html+=f"<tr><td>{row['Model']}</td><td>{row['Brand']}</td><td>{row['PC1']:.4f}</td><td>{row['PC2']:.4f}</td><td>{row['Distance_to_Ideal']:.4f}</td></tr>"
+    html+="</table>"
+    return html
 
-
-if __name__ == '__main__':
+if __name__=='__main__':
     app.run(debug=True)
