@@ -94,7 +94,8 @@ def process_mouse():
     ideal_profile = df_my[['PC1','PC2']].mean().values
     df_pca['Distance_to_Ideal'] = np.linalg.norm(df_pca[['PC1','PC2']].values - ideal_profile, axis=1)
 
-    recommendations = df_pca.sort_values('Distance_to_Ideal').head(5)
+    df_recommend = df_pca[~df_pca['Model'].isin(my_mouse_collection)]
+    recommendations = df_recommend.sort_values('Distance_to_Ideal').head(5)
     result = recommendations[['Model','Brand','Distance_to_Ideal']].to_dict(orient='records')
 
     return jsonify({'name':name,'selected_features':selected_features,'recommendations':result})
