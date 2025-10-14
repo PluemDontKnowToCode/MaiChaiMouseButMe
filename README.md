@@ -9,40 +9,48 @@ https://www.kaggle.com/datasets/ellimaaac/gaming-mouse-specs/data
    git clone https://github.com/PluemDontKnowToCode/MaiChaiMouseButMe
    cd MaiChaiMouseButMe
 ```
-
-# build venv
+# Run app
+## build venv(Not important)
 
 ```bash
    python -m venv myenv
 ```
 
-# Windows
+## runvenv
 ```bash
    # Windows
    myenv\Scripts\activate
    # Linux/Mac
    source myenv/bin/activate
 ```
-
-# ติดตั้งไลบรารี
+## Install lib
 ```bash
-   pip install pandas scikit-learn plotly numpy jupyter notebook
+   pip install pandas scikit-learn plotly numpy flask jupyter notebook
 
 ```
-# run program
+## run program 
+```bash
+   python app.py
+```
+## stop program
+```bash
+   # linux
+   deactivate
+```
+# Run Jupyter Notebook
+## Install lib
+```bash
+   pip install pandas scikit-learn plotly numpy flask jupyter notebook
+
+```
+## Run on Jupyter Notebook
 ```bash
    # Window
    run run.bat
    click Run -> Run All Cells
 ```
-# รัน Jupyter Notebook
 ```bash
    # linux
    jupyter notebook main.ipynb
 ```
 
-# stop program
-```bash
-   # linux
-   deactivate
-```

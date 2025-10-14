@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mouse PCA Analyzer</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; margin: 40px; background: #fafafa; color: #333; }
+    h2 { color: #333; }
+    form { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 350px; }
+    label { display: block; margin-top: 8px; }
+    button { margin-top: 15px; padding: 8px 16px; border: none; background: #0078d7; color: white; border-radius: 6px; cursor: pointer; }
+    button:hover { background: #005fa3; }
+    .card { background: white; padding: 15px; border-radius: 8px; margin-top: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border-bottom: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <h2>🖱️ Mouse PCA Analyzer</h2>
+
+  <form id="mouseForm">
+    <label><b>Name of Mouse:</b></label>
+    <input type="text" name="name" required>
+
+    <h3>Select Features</h3>
+    {% for f in features %}
+      <label><input type="checkbox" name="features" value="{{ f }}"> {{ f }}</label>
+    {% endfor %}
+
+    <button type="submit">Process Mouse</button>
+  </form>
+
+  <div id="result"></div>
+
+  <script>
+    const form = document.getElementById('mouseForm');
+    const resultDiv = document.getElementById('result');
+
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      resultDiv.innerHTML = "<p>⏳ Processing...</p>";
+      const formData = new FormData(form);
+      const res = await fetch('/process', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      // build readable output
+      let html = `<div class="card"><h3>Result for <b>${data.name}</b></h3>`;
+      html += `<p><b>Selected Features:</b> ${data.selected_features.join(', ')}</p>`;
+      html += `<h4>Top 5 Recommended Mice</h4>`;
+      html += `<table><tr><th>#</th><th>Model</th><th>Brand</th><th>Distance</th></tr>`;
+      data.recommendations.forEach((r, i) => {
+        html += `<tr>
+                  <td>${i + 1}</td>
+                  <td>${r.Model}</td>
+                  <td>${r.Brand}</td>
+                  <td>${r.Distance_to_Ideal.toFixed(4)}</td>
+                </tr>`;
+      });
+      html += `</table></div>`;
+      resultDiv.innerHTML = html;
+    };
+  </script>
+</body>
+</html>
