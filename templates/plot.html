@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,21 +7,16 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='plot.css') }}">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
-
 <body>
     <h1>ผลการวิเคราะห์ PCA ของข้อมูลเมาส์</h1>
-    <p>กราฟนี้แสดงการกระจายของเมาส์ต่างๆ โดยใช้ 2 แกนคุณลักษณะหลักที่ได้จากการวิเคราะห์ PCA</p>
+    <p>กราฟนี้แสดงการกระจายของเมาส์ต่างๆ โดยใช้ 2 แกนคุณลักษณะหลัก</p>
     <div id="myDiv" style="width:100%; max-width: 900px; height:600px;"></div>
 
     <h2>ตารางข้อมูลรายละเอียด</h2>
     <table>
         <thead>
             <tr>
-                <th>Model</th>
-                <th>Brand</th>
-                <th>PC1</th>
-                <th>PC2</th>
-                <th>Distance to Ideal</th>
+                <th>Model</th><th>Brand</th><th>PC1</th><th>PC2</th><th>Distance to Ideal</th>
             </tr>
         </thead>
         <tbody>
@@ -37,11 +31,14 @@
             {% endfor %}
         </tbody>
     </table>
-    <script>
-    const dataByBrand = {{ all_mice_json | tojson }};
-    const idealProfile = {{ ideal_profile_json | tojson }};
-</script>
-<script src="{{ url_for('static', filename='plot.js') }}"></script>
-</body>
 
+    <script id="data-by-brand" type="application/json">
+        {{ data_by_brand_json | tojson }}
+    </script>
+    <script id="ideal-profile" type="application/json">
+        {{ ideal_profile_json | tojson }}
+    </script>
+
+    <script src="{{ url_for('static', filename='plot.js') }}" defer></script>
+</body>
 </html>

@@ -30,7 +30,7 @@ def search_mouse():
     results = df_copy[mask]
     if results.empty:
         return jsonify({'message':'❌ No matching mouse found'})
-    return jsonify(results[['Model','Brand']].to_dict(orient='records'))
+    return jsonify(results[['Model','Brand']].to_dict   (orient='records'))
 
 # Add new mouse
 @app.route('/add', methods=['POST'])
@@ -132,6 +132,7 @@ def pca_details_page():
 
     table_data = df_pca.sort_values('Distance_to_Ideal').to_dict(orient='records')
     ideal_profile_data = ideal_profile.tolist()
+
     data_by_brand = {}
     for brand, group in df_pca.groupby('Brand'):
         data_by_brand[brand] = group[['PC1', 'PC2', 'Model']].to_dict(orient='records')
@@ -139,7 +140,7 @@ def pca_details_page():
     return render_template(
        'plot.html', 
         table_rows=table_data,
-        all_mice_json=data_by_brand, 
+        data_by_brand_json=data_by_brand, 
         ideal_profile_json=ideal_profile_data) 
 
 
