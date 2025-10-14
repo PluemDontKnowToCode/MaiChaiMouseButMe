@@ -1,64 +1,264 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Mouse PCA Analyzer</title>
-  <style>
-    body { font-family: 'Segoe UI', sans-serif; margin: 40px; background: #fafafa; color: #333; }
-    h2 { color: #333; }
-    form { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 350px; }
-    label { display: block; margin-top: 8px; }
-    button { margin-top: 15px; padding: 8px 16px; border: none; background: #0078d7; color: white; border-radius: 6px; cursor: pointer; }
-    button:hover { background: #005fa3; }
-    .card { background: white; padding: 15px; border-radius: 8px; margin-top: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border-bottom: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background: #f0f0f0; }
-  </style>
+<meta charset="UTF-8">
+<title>Mouse PCA Analyzer</title>
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    margin: 30px;
+    background: #f5f5f5;
+    color: #333;
+}
+
+h2 {
+    color: #222;
+}
+
+form {
+    background: #fff;
+    padding: 20px;
+    margin-bottom: 30px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+label {
+    display: block;
+    margin-top: 10px;
+    font-weight: 500;
+}
+
+input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 8px 10px;
+    margin-top: 4px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+button {
+    margin-top: 15px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:disabled {
+    background-color: #999;
+    cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
+    background-color: #45a049;
+}
+
+.suggestions {
+    position: absolute;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    max-height: 150px;
+    overflow-y: auto;
+    width: 100%;
+    z-index: 1000;
+}
+
+.suggestions div {
+    padding: 8px 10px;
+    cursor: pointer;
+}
+
+.suggestions div:hover {
+    background-color: #f0f0f0;
+}
+
+.error {
+    color: red;
+    margin-top: 5px;
+}
+
+.success {
+    color: green;
+    margin-top: 5px;
+}
+
+.card {
+    background: #fff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+h3, h4 {
+    margin-top: 10px;
+}
+
+</style>
 </head>
 <body>
-  <h2>🖱️ Mouse PCA Analyzer</h2>
+<h2>🖱️ Mouse PCA Analyzer</h2>
 
-  <form id="mouseForm">
-    <label><b>Name of Mouse:</b></label>
-    <input type="text" name="name" required>
+<form id="mouseForm">
+    <label><b>Search by Brand or Model:</b></label>
+    <div style="position: relative;">
+        <input type="text" id="mouseName" name="name" placeholder="Type model or brand..." autocomplete="off" required>
+        <div id="suggestions" class="suggestions"></div>
+    </div>
+    <div id="searchError" class="error"></div>
 
     <h3>Select Features</h3>
-    {% for f in features %}
-      <label><input type="checkbox" name="features" value="{{ f }}"> {{ f }}</label>
-    {% endfor %}
+    <div style="display:flex; flex-wrap:wrap; gap:10px;">
+        {% for f in features %}
+        <label><input type="checkbox" name="features" value="{{ f }}"> {{ f }}</label>
+        {% endfor %}
+    </div>
 
     <button type="submit">Process Mouse</button>
-  </form>
+</form>
 
-  <div id="result"></div>
+<div id="result"></div>
 
-  <script>
-    const form = document.getElementById('mouseForm');
-    const resultDiv = document.getElementById('result');
+<h2>➕ Add New Mouse</h2>
+<form id="addForm">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+        <label>Model:<input type="text" name="Model" required></label>
+        <label>Brand:<input type="text" name="Brand" required></label>
+        <label>DPI:<input type="number" name="DPI" required></label>
+        <label>Polling rate (Hz):<input type="number" name="Polling rate (Hz)" required></label>
+        <label>Weight (grams):<input type="number" name="Weight (grams)" required></label>
+        <label>Length (mm):<input type="number" name="Length (mm)" required></label>
+        <label>Width (mm):<input type="number" name="Width (mm)" required></label>
+        <label>Height (mm):<input type="number" name="Height (mm)" required></label>
+        <label>Side buttons:<input type="number" name="Side buttons" required></label>
+    </div>
+    <button type="submit">Add Mouse</button>
+</form>
+<div id="addResult" class="error" style="margin-top:10px;"></div>
 
-    form.onsubmit = async (e) => {
-      e.preventDefault();
-      resultDiv.innerHTML = "<p>⏳ Processing...</p>";
-      const formData = new FormData(form);
-      const res = await fetch('/process', { method: 'POST', body: formData });
-      const data = await res.json();
+<script>
+const form = document.getElementById('mouseForm');
+const resultDiv = document.getElementById('result');
+const nameInput = document.getElementById('mouseName');
+const suggestionsBox = document.getElementById('suggestions');
+const searchError = document.getElementById('searchError');
 
-      // build readable output
-      let html = `<div class="card"><h3>Result for <b>${data.name}</b></h3>`;
-      html += `<p><b>Selected Features:</b> ${data.selected_features.join(', ')}</p>`;
-      html += `<h4>Top 5 Recommended Mice</h4>`;
-      html += `<table><tr><th>#</th><th>Model</th><th>Brand</th><th>Distance</th></tr>`;
-      data.recommendations.forEach((r, i) => {
-        html += `<tr>
-                  <td>${i + 1}</td>
-                  <td>${r.Model}</td>
-                  <td>${r.Brand}</td>
-                  <td>${r.Distance_to_Ideal.toFixed(4)}</td>
-                </tr>`;
-      });
-      html += `</table></div>`;
-      resultDiv.innerHTML = html;
+form.onsubmit = async (e) => {
+    e.preventDefault();
+    searchError.textContent = '';
+    resultDiv.innerHTML = "<p>⏳ Processing...</p>";
+    form.querySelector('button[type="submit"]').disabled = true;
+
+    const formData = new FormData(form);
+    const res = await fetch('/process', {method:'POST', body:formData});
+    const data = await res.json();
+
+    form.querySelector('button[type="submit"]').disabled = false;
+
+    if(data.result){ 
+        resultDiv.innerHTML = `<p>${data.result}</p>`; 
+        return; 
+    }
+
+    let html = `<div class="card"><h3>Result for <b>${data.name}</b></h3>`;
+    html += `<p><b>Selected Features:</b> ${data.selected_features.join(', ')}</p>`;
+    html += `<h4>Top 5 Recommended Mice</h4><table><tr><th>#</th><th>Model</th><th>Brand</th><th>Distance</th></tr>`;
+    data.recommendations.forEach((r,i)=>{
+        html += `<tr><td>${i+1}</td><td>${r.Model}</td><td>${r.Brand}</td><td>${r.Distance_to_Ideal.toFixed(4)}</td></tr>`;
+    });
+    html += `</table><button id="viewPCA" style="margin-top:10px;">🔎 View PCA Details</button></div>`;
+    resultDiv.innerHTML = html;
+
+    document.getElementById('viewPCA').onclick = () => {
+        const name = encodeURIComponent(nameInput.value);
+        const features = [];
+        form.querySelectorAll('input[name="features"]:checked').forEach(f => features.push(f.value));
+        const featuresStr = encodeURIComponent(features.join(','));
+        window.open(`/pca-details-page?name=${name}&features=${featuresStr}`, '_blank');
     };
-  </script>
+};
+
+// Search suggestions
+nameInput.addEventListener('input', async () => {
+    const query = nameInput.value.trim();
+    searchError.textContent = '';
+    if(query.length < 2){ suggestionsBox.style.display = 'none'; return; }
+
+    const res = await fetch(`/search?query=${encodeURIComponent(query)}`);
+    const data = await res.json();
+
+    if(data.error || data.message){ 
+        searchError.textContent = data.error || data.message; 
+        suggestionsBox.style.display = 'none'; 
+        return; 
+    }
+
+    if(Array.isArray(data) && data.length > 0){
+        suggestionsBox.innerHTML = '';
+        data.forEach(item => {
+            const div = document.createElement('div');
+            div.textContent = `${item.Model} (${item.Brand})`;
+            div.onclick = () => { nameInput.value = item.Model; suggestionsBox.style.display='none'; };
+            suggestionsBox.appendChild(div);
+        });
+        suggestionsBox.style.display = 'block';
+    } else {
+        searchError.textContent = '⚠️ Mouse not found';
+        suggestionsBox.style.display = 'none';
+    }
+});
+
+document.addEventListener('click', (e) => { 
+    if(!suggestionsBox.contains(e.target) && e.target !== nameInput){ 
+        suggestionsBox.style.display='none'; 
+    } 
+});
+
+// Add new mouse
+const addForm = document.getElementById('addForm');
+const addResult = document.getElementById('addResult');
+addForm.onsubmit = async(e) => {
+    e.preventDefault();
+    addResult.textContent = '⏳ Adding mouse...';
+    addForm.querySelector('button[type="submit"]').disabled = true;
+
+    const formData = new FormData(addForm);
+    const obj = {};
+    formData.forEach((v,k)=> obj[k] = v);
+
+    const res = await fetch('/add', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(obj)});
+    const data = await res.json();
+
+    addForm.querySelector('button[type="submit"]').disabled = false;
+    addResult.textContent = data.error ? `❌ ${data.error}` : `✅ ${data.success}`;
+    addResult.className = data.error ? 'error' : 'success';
+};
+</script>
 </body>
 </html>
