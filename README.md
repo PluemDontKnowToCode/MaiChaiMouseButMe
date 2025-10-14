@@ -26,9 +26,17 @@ https://www.kaggle.com/datasets/ellimaaac/gaming-mouse-specs/data
 
 # ติดตั้งไลบรารี
 ```bash
-   pip install pandas scikit-learn plotly numpy
+   pip install pandas scikit-learn plotly numpy jupyter notebook
 
 ```
+# run program
+```bash
+   # Window
+   run run.bat
+   click Run -> Run All Cells
+```
+
+
 # stop program
 ```bash
    deactivate
