@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Mouse PCA Analyzer</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Orbitron:700&display=swap">
     <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
 </head>
 
@@ -12,14 +13,15 @@
 
     <div class="card">
         <h3>My Collection</h3>
+        <label for="mouseName"><b>Search Mouse:</b></label>
+        <input type="text" id="mouseName" placeholder="Type model or brand..." autocomplete="off">
+        <div id="suggestions" class="suggestions"></div>
         <div id="myCollection" class="collection-container"></div>
     </div>
 
     <div class="card">
         <form id="mouseForm">
-            <label for="mouseName"><b>Search Mouse:</b></label>
-            <input type="text" id="mouseName" placeholder="Type model or brand..." autocomplete="off">
-            <div id="suggestions" class="suggestions"></div>
+            
 
             <h3>Select Features</h3>
             <div id="featureCheckboxes" class="feature-checkboxes">
@@ -28,7 +30,7 @@
                 {% endfor %}
             </div>
 
-            <button type="submit" style="background:#007BFF; color:white;">Process Mouse</button>
+            <button id="process-mouse"type="submit" style="background:#007BFF; color:white;">Process Mouse</button>
         </form>
     </div>
 
@@ -38,19 +40,20 @@
         <h2>➕ Add New Mouse</h2>
         <form id="addForm">
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
-                <label>Model:<input type="text" name="Model" required></label>
-                <label>Brand:<input type="text" name="Brand" required></label>
-                <label>DPI:<input type="number" name="DPI" required></label>
-                <label>Polling rate (Hz):<input type="number" name="Polling rate (Hz)" required></label>
-                <label>Weight (grams):<input type="number" name="Weight (grams)" required></label>
-                <label>Length (mm):<input type="number" name="Length (mm)" required></label>
-                <label>Width (mm):<input type="number" name="Width (mm)" required></label>
-                <label>Height (mm):<input type="number" name="Height (mm)" required></label>
-                <label>Side buttons:<input type="number" name="Side buttons" required></label>
+                <label class="add-label">Model:<input type="text" name="Model" required></label>
+                <label class="add-label">Brand:<input type="text" name="Brand" required></label>
+                <label class="add-label">DPI:<input type="number" name="DPI" required></label>
+                <label class="add-label">Polling rate (Hz):<input type="number" name="Polling rate (Hz)" required></label>
+                <label class="add-label">Weight (grams):<input type="number" name="Weight (grams)" required></label>
+                <label class="add-label">Length (mm):<input type="number" name="Length (mm)" required></label>
+                <label class="add-label">Width (mm):<input type="number" name="Width (mm)" required></label>
+                <label class="add-label">Height (mm):<input type="number" name="Height (mm)" required></label>
+                <label class="add-label">Side buttons:<input type="number" name="Side buttons" required></label>
             </div>
             <button type="submit" style="background:#28a745; color:white;">Add Mouse</button>
         </form>
         <div id="addResult" class="error" style="margin-top:10px;"></div>
+        <div id="newMouse" class="new-mouse"></div>
     </div>
     <script src="{{ url_for('static', filename='index.js') }}"></script>
 </body>

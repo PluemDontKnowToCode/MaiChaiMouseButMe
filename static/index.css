@@ -1,110 +1,128 @@
 body {
-    font-family: 'Segoe UI', sans-serif;
-    margin: 30px;
-    background: #f5f5f5;
-    color: #333;
+    font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #232526 0%, #414345 100%);
+    color: #e0e0e0;
+    margin: 0;
+    padding: 0;
 }
-h2, h3 {
+
+h1 {
+    font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+    color: #00ffea;
+    text-shadow: 2px 2px 8px #222, 0 0 10px #00ffea;
+    margin-top: 30px;
+    text-align: center;
+}
+h2 {
+    font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+    color: #00ffea;
+    text-shadow: 2px 2px 8px #222, 0 0 10px #00ffea;
+    text-align: center;
+    margin-top: 0%;
+    margin-bottom: 20px;
+}
+
+.card, table {
+    background: rgba(34, 34, 34, 0.95);
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,255,234,0.08), 0 1px 2px rgba(0,0,0,0.2);
+    margin: 30px auto;
+    padding: 24px;
+    max-width: 950px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 12px 8px;
+    border-bottom: 1px solid #333;
+    text-align: center;
+}
+
+th {
+    background: #00ffea;
     color: #222;
+    font-weight: bold;
+    text-shadow: none;
 }
-.card {
-    background: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+
+tr:hover {
+    background: #222d;
+}
+
+#myDiv {
+    border-radius: 12px;
+    box-shadow: 0 0 24px #00ffea55;
+    background: #181a1b;
+    margin-bottom: 30px;
+}
+
+button {
+    background: linear-gradient(90deg, #ff0057 0%, #00ffea 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 1.1em;
+    font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+    cursor: pointer;
+    box-shadow: 0 2px 8px #00ffea55;
     margin-bottom: 20px;
+    transition: transform 0.1s;
 }
-.collection-container {
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    margin-bottom: 20px;
+
+button:hover {
+    transform: scale(1.07);
+    background: linear-gradient(90deg, #00ffea 0%, #ff0057 100%);
 }
-.collection-container div {
-    background: #fff;
-    padding: 6px 10px;
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+
+::-webkit-scrollbar {
+    width: 8px;
+    background: #222;
+}
+::-webkit-scrollbar-thumb {
+    background: #00ffea;
+    border-radius: 8px;
+}
+#process-mouse { 
+    display: block;
+    margin-top: 20px;
+    margin-left: auto;
+}
+.add-label {
+    font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+    color: #00ffea;
+    font-weight: bold;
+    letter-spacing: 1px;
+    background: linear-gradient(90deg, #181a1b 0%, #232526 100%);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    box-shadow: 0 2px 8px #00ffea22;
     display: flex;
     align-items: center;
     gap: 8px;
 }
-.collection-container button {
-    background: #e74c3c;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 2px 6px;
-    cursor: pointer;
-}
-.collection-container button:hover {
-    background: #c0392b;
-}
-input[type="text"], input[type="number"] {
-    width: 100%;
-    padding: 8px 10px;
-    margin-top: 4px;
+.add-label input {
+    margin-left: 8px;
+    background: #222;
+    color: #fff;
+    border: 1px solid #00ffea;
     border-radius: 6px;
-    border: 1px solid #ccc;
-    box-sizing: border-box;
+    padding: 6px 10px;
+    font-size: 1em;
+    font-family: inherit;
+    box-shadow: 0 1px 4px #00ffea22;
 }
-button {
-    margin-top: 15px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-button:hover {
-    opacity: 0.9;
-}
-button:disabled {
-    background-color: #999;
-    cursor: not-allowed;
-}
-.suggestions {
-    position: absolute;
+.add-label input:focus,
+.add-label input:not(:placeholder-shown) {
     background: #fff;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    max-height: 180px; /* ความสูงสูงสุด */
-    overflow-y: auto;
-    width: auto; /* ปรับเป็นอัตโนมัติเท่าความกว้าง input */
-    min-width: 200px; /* ความกว้างขั้นต่ำ */
-    max-width: 400px; /* ความกว้างสูงสุด */
-    z-index: 1000;
-}
-.suggestions div {
-    padding: 8px 10px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.suggestions div:hover {
-    background-color: #f0f0f0;
-}
-.suggestions div button {
-    background:#28a745;
-    color:white;
-    border:none;
-    border-radius:4px;
-    padding:2px 6px;
-    cursor:pointer;
-}
-.suggestions div button:hover {
-    background:#218838;
-}
-.feature-checkboxes {
-    max-height:200px; 
-    overflow-y:auto; 
-    border:1px solid #ddd; 
-    padding:10px; 
-    border-radius:6px;
-}
-.feature-checkboxes label {
-    display:block; 
-    margin-bottom:5px;
+    color: #222;
+    border: 1.5px solid #00ffea;
+    box-shadow: 0 2px 8px #00ffea55;
+    transition: background 0.2s, color 0.2s;
 }

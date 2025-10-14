@@ -4,15 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ผลการวิเคราะห์ PCA</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Orbitron:700&display=swap">
     <link rel="stylesheet" href="{{ url_for('static', filename='plot.css') }}">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
     <h1>ผลการวิเคราะห์ PCA ของข้อมูลเมาส์</h1>
-    <p>กราฟนี้แสดงการกระจายของเมาส์ต่างๆ โดยใช้ 2 แกนคุณลักษณะหลัก</p>
+    <p id="description">กราฟนี้แสดงการกระจายของเมาส์ต่างๆ โดยใช้ 2 แกนคุณลักษณะหลัก</p>
     <div id="myDiv" style="width:100%; max-width: 900px; height:600px;"></div>
 
-    <h2>ตารางข้อมูลรายละเอียด</h2>
+    <h2 id="h2">ตารางข้อมูลรายละเอียด</h2>
     <table>
         <thead>
             <tr>

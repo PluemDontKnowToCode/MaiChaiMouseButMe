@@ -5,6 +5,9 @@ const collectionDiv = document.getElementById('myCollection');
 const form = document.getElementById('mouseForm');
 const resultDiv = document.getElementById('result');
 
+const addForm = document.getElementById('addForm');
+const addResult = document.getElementById('addResult');
+
 // Render My Collection
 function renderCollection(){
     collectionDiv.innerHTML = '';
@@ -21,7 +24,34 @@ function renderCollection(){
         collectionDiv.appendChild(div);
     });
 }
+//Add new
+addForm.onsubmit = async (e) => {
+    e.preventDefault();
+    addResult.textContent = '';
 
+    // Collect form data
+    const formData = {};
+    addForm.querySelectorAll('input').forEach(input => {
+        formData[input.name] = input.value;
+    });
+
+    // Send to backend
+    const res = await fetch('/add', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(formData)
+    });
+    const data = await res.json();
+
+    if (data.success) {
+        addResult.textContent = data.success;
+        addResult.style.color = 'lime';
+        addForm.reset();
+    } else if (data.error) {
+        addResult.textContent = data.error;
+        addResult.style.color = 'red';
+    }
+};
 nameInput.addEventListener('input', async () => {
     const query = nameInput.value.trim();
     if(query.length < 2){ suggestionsBox.style.display='none'; return; }
