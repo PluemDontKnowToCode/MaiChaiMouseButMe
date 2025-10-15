@@ -14,33 +14,33 @@ df_copy = df.copy()
 
 # -------------------------------------------------------------------- clean data ------------------------------------------------------
 
-# feature ที่จะใช้ 
-features = [
-    'DPI',
-    'Polling rate (Hz)',
-    'Weight (grams)',
-    'Length (mm)',
-    'Width (mm)',
-    'Height (mm)',
-    'Side buttons'
-]
-existing_features = [f for f in features if f in df.columns]
+# # feature ที่จะใช้ 
+# features = [
+#     'DPI',
+#     'Polling rate (Hz)',
+#     'Weight (grams)',
+#     'Length (mm)',
+#     'Width (mm)',
+#     'Height (mm)',
+#     'Side buttons'
+# ]
+# existing_features = [f for f in features if f in df.columns]
 
-valid_counts = df_features.notna().sum()
-total_counts = len(df_features)
-percent_valid = (valid_counts / total_counts * 100).round(2)
-percent_missing = (100 - percent_valid).round(2)
+# valid_counts = df_features.notna().sum()
+# total_counts = len(df_features)
+# percent_valid = (valid_counts / total_counts * 100).round(2)
+# percent_missing = (100 - percent_valid).round(2)
 
 
-stats = pd.DataFrame({
-    'Mean': df_copy.mean(),
-    'Max': df_copy.max(),
-    'Min': df_copy.min(),
-    'StdDev': df_copy.std(),
-    'Mode': df_copy.mode().iloc[0],
-    '%Valid': percent_valid,
-    '%Missing': percent_missing
-}).round(2)
+# stats = pd.DataFrame({
+#     'Mean': df_copy.mean(),
+#     'Max': df_copy.max(),
+#     'Min': df_copy.min(),
+#     'StdDev': df_copy.std(),
+#     'Mode': df_copy.mode().iloc[0],
+#     '%Valid': percent_valid,
+#     '%Missing': percent_missing
+# }).round(2)
 
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -106,7 +106,31 @@ def process_mouse():
         return jsonify({'result':'⚠️ ไม่ได้เลือกคุณสมบัติใดๆ'})
 
     # น่าจะต้องเอาอก เพราะจะ clean data ข้างบน -------------------------------------------------------------------------------------------
+    # --- Clean data: remove rows for models that have both missing and non-missing data, keeping only the complete row ---
     df_features = df_copy[existing_features].copy()
+    missing_mask = df_features.isnull().any(axis=1)
+    models_with_missing = set(df_copy.loc[missing_mask, 'Model'])
+    complete_mask = ~df_features.isnull().any(axis=1)
+    models_with_complete = set(df_copy.loc[complete_mask, 'Model'])
+    duplicate_models = models_with_missing & models_with_complete
+    drop_idx = df_copy.index[missing_mask & df_copy['Model'].isin(duplicate_models)]
+    df_features = df_features.drop(index=drop_idx)
+    df_copy_clean = df_copy.drop(index=drop_idx)
+
+    # --- Combine brands for identical models with same features but different brands ---
+    df_full = df_copy_clean[['Model', 'Brand'] + existing_features].copy()
+    grouped = df_full.groupby(['Model'] + existing_features, dropna=False)
+    combined_rows = []
+    for _, group in grouped:
+        brands = ', '.join(sorted(set(group['Brand'])))
+        row = group.iloc[0].copy()
+        row['Brand'] = brands
+        combined_rows.append(row)
+    df_combined = pd.DataFrame(combined_rows)
+    df_features = df_combined[existing_features].copy()
+    df_copy_clean = df_combined[['Model', 'Brand'] + existing_features].copy()
+
+    # --- Impute and scale ---
     df_imputed = pd.DataFrame(SimpleImputer(strategy='mean').fit_transform(df_features),
                               columns=existing_features)
     df_scaled = pd.DataFrame(StandardScaler().fit_transform(df_imputed),
@@ -117,8 +141,8 @@ def process_mouse():
     pca = PCA(n_components=2)
     pcs = pca.fit_transform(df_scaled)
     df_pca = pd.DataFrame(pcs, columns=['PC1','PC2'])
-    df_pca['Model'] = df_copy['Model']
-    df_pca['Brand'] = df_copy['Brand']
+    df_pca['Model'] = df_copy_clean['Model']
+    df_pca['Brand'] = df_copy_clean['Brand']
 
     # ใช้ input ของผู้ใช้แทน collection แบบคงที่
     my_mouse_input = request.form.get('my_mouse_collection', '')
@@ -142,6 +166,7 @@ def process_mouse():
 
 @app.route('/pca-details-page')
 def pca_details_page():
+    
     my_mouse_input = request.args.get('my_mouse_collection', '')
     features = request.args.get('features', '')
 
@@ -153,16 +178,60 @@ def pca_details_page():
 
     debug_steps = []
     # Step 1: Select columns
+    # Clean data: remove rows for models that have both missing and non-missing data, keeping only the complete row
     df_features = df_copy[selected_features].copy()
+    # Find models with missing data
+    missing_mask = df_features.isnull().any(axis=1)
+    models_with_missing = set(df_copy.loc[missing_mask, 'Model'])
+    # Find models with complete data
+    complete_mask = ~df_features.isnull().any(axis=1)
+    models_with_complete = set(df_copy.loc[complete_mask, 'Model'])
+    # Models that have both missing and complete rows
+    duplicate_models = models_with_missing & models_with_complete
+    # Remove rows for these models where data is missing
+    drop_idx = df_copy.index[missing_mask & df_copy['Model'].isin(duplicate_models)]
+    df_features = df_features.drop(index=drop_idx)
+    df_copy_clean = df_copy.drop(index=drop_idx)
+    # Combine brands for identical models with same features but different brands
+    # Only consider rows with complete data
+    df_full = df_copy_clean[['Model', 'Brand'] + selected_features].copy()
+    # Group by Model and feature values
+    grouped = df_full.groupby(['Model'] + selected_features, dropna=False)
+    combined_rows = []
+    for _, group in grouped:
+        brands = ', '.join(sorted(set(group['Brand'])))
+        row = group.iloc[0].copy()
+        row['Brand'] = brands
+        combined_rows.append(row)
+    df_combined = pd.DataFrame(combined_rows)
+    # Update df_features and df_copy_clean for further steps
+    df_features = df_combined[selected_features].copy()
+    df_copy_clean = df_combined[['Model', 'Brand'] + selected_features].copy()
+    # ...existing code...
+    valid_counts = df_features.notna().sum()
+    total_counts = len(df_features)
+    percent_valid = (valid_counts / total_counts * 100).round(2)
+    percent_missing = (100 - percent_valid).round(2)
+    stats = pd.DataFrame({
+        'Mean': df_features.mean(),
+        'Max': df_features.max(),
+        'Min': df_features.min(),
+        'StdDev': df_features.std(),
+        'Mode': df_features.mode().iloc[0],
+        '%Valid': percent_valid,
+        '%Missing': percent_missing
+    }).round(2)
+    stats_html = "<div class='card' style='margin-bottom:18px;'>"
+    stats_html += "<div class='pca-topic'>Feature Statistics & Missing Value Summary</div>"
+    stats_html += stats.to_html(classes='pca-detail')
+    stats_html += "</div>"
     debug_steps.append({
         'topic': 'Step 1: Selected Features',
         'detail': str(pd.concat([df_copy[['Model']], df_features], axis=1).head())
     })
 
-
-
-    # เดี๋ยวมาจัดการตรวนี้อีกที เเบบลบ data ที่ซ้ำ --------------------------------------------------------------------------------
-    # Step 2: Impute missing
+    # --------------------------------------------------------------------------------------------------------------------
+    # Step 2: Impute Missing Values
     imputer = SimpleImputer(strategy='mean')
     df_imputed = pd.DataFrame(imputer.fit_transform(df_features), columns=selected_features)
     debug_steps.append({
@@ -265,8 +334,8 @@ def pca_details_page():
     ])
     return render_template(
         'plot.html',
+        stats_html=stats_html,
         debug_html=debug_html,
-
         table_rows=table_data,
         data_by_brand_json=data_by_brand,
         ideal_profile_json=ideal_profile_data

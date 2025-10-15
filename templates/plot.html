@@ -13,9 +13,15 @@
     {% if error %}
       <div style="color:red;font-weight:bold;">{{ error }}</div>
     {% endif %}
-    {% if debug_html %}
-      <div class="card" style="margin-bottom:32px;">{{ debug_html|safe }}</div>
-    {% endif %}
+            {% if stats_html %}
+                {{ stats_html|safe }}
+            {% endif %}
+            {% if missing_html %}
+                {{ missing_html|safe }}
+            {% endif %}
+            {% if debug_html %}
+                <div class="card" style="margin-bottom:32px;">{{ debug_html|safe }}</div>
+            {% endif %}
     {% if result_table_html %}
       <div class="card" style="margin-bottom:32px;">{{ result_table_html|safe }}</div>
     {% endif %}
