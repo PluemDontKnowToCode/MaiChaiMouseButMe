@@ -12,6 +12,40 @@ app = Flask(__name__)
 df = pd.read_csv('2025_09_06_MousedB.csv', sep=';')
 df_copy = df.copy()
 
+# -------------------------------------------------------------------- clean data ------------------------------------------------------
+
+# feature ที่จะใช้ 
+features = [
+    'DPI',
+    'Polling rate (Hz)',
+    'Weight (grams)',
+    'Length (mm)',
+    'Width (mm)',
+    'Height (mm)',
+    'Side buttons'
+]
+existing_features = [f for f in features if f in df.columns]
+
+valid_counts = df_features.notna().sum()
+total_counts = len(df_features)
+percent_valid = (valid_counts / total_counts * 100).round(2)
+percent_missing = (100 - percent_valid).round(2)
+
+
+stats = pd.DataFrame({
+    'Mean': df_copy.mean(),
+    'Max': df_copy.max(),
+    'Min': df_copy.min(),
+    'StdDev': df_copy.std(),
+    'Mode': df_copy.mode().iloc[0],
+    '%Valid': percent_valid,
+    '%Missing': percent_missing
+}).round(2)
+
+
+# -----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 # หน้าแรก
 @app.route('/')
 def index():
@@ -71,11 +105,15 @@ def process_mouse():
     if not existing_features:
         return jsonify({'result':'⚠️ ไม่ได้เลือกคุณสมบัติใดๆ'})
 
+    # น่าจะต้องเอาอก เพราะจะ clean data ข้างบน -------------------------------------------------------------------------------------------
     df_features = df_copy[existing_features].copy()
-    df_imputed = pd.DataFrame(SimpleImputer(strategy='mean').fit_transform(df_features),
+    df_copy = pd.DataFrame(SimpleImputer(strategy='mean').fit_transform(df_features),
                               columns=existing_features)
-    df_scaled = pd.DataFrame(StandardScaler().fit_transform(df_imputed),
+    df_scaled = pd.DataFrame(StandardScaler().fit_transform(df_copy),
                              columns=existing_features)
+    
+
+
     pca = PCA(n_components=2)
     pcs = pca.fit_transform(df_scaled)
     df_pca = pd.DataFrame(pcs, columns=['PC1','PC2'])
@@ -120,23 +158,30 @@ def pca_details_page():
         'topic': 'Step 1: Selected Features',
         'detail': str(pd.concat([df_copy[['Model']], df_features], axis=1).head())
     })
+
+
+
+    # เดี๋ยวมาจัดการตรวนี้อีกที เเบบลบ data ที่ซ้ำ --------------------------------------------------------------------------------
     # Step 2: Impute missing
     imputer = SimpleImputer(strategy='mean')
-    df_imputed = pd.DataFrame(imputer.fit_transform(df_features), columns=selected_features)
+    df_copy = pd.DataFrame(imputer.fit_transform(df_features), columns=selected_features)
     debug_steps.append({
         'topic': 'Step 2: After Imputation (mean)',
-        'detail': str(pd.concat([df_copy[['Model']], df_imputed], axis=1).head())
+        'detail': str(pd.concat([df_copy[['Model']], df_copy], axis=1).head())
     })
     # Step 3: Standardize
     scaler = StandardScaler()
-    df_scaled = pd.DataFrame(scaler.fit_transform(df_imputed), columns=selected_features)
+    df_scaled = pd.DataFrame(scaler.fit_transform(df_copy), columns=selected_features)
     debug_steps.append({
         'topic': 'Step 3: After Standardization',
         'detail': str(pd.concat([df_copy[['Model']], df_scaled], axis=1).head())
     })
+    # --------------------------------------------------------------------------------------------------------------------
+
+
 
     # Step 4: Center Data (Mean Shifting)
-    X = df_imputed.values
+    X = df_copy.values
     mu = np.mean(X, axis=0)
     X_centered = X - mu
     debug_steps.append({
