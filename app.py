@@ -5,6 +5,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.decomposition import PCA
 import numpy as np
 import json
+from IPython.display import display
 
 app = Flask(__name__)
 
@@ -41,33 +42,60 @@ def clean_mouse_data(df, features):
     df_features = df_combined[features].copy()
     df_clean = df_combined[['Model', 'Brand'] + features].copy()
     return df_features, df_clean
-# # feature ที่จะใช้ 
-# features = [
-#     'DPI',
-#     'Polling rate (Hz)',
-#     'Weight (grams)',
-#     'Length (mm)',
-#     'Width (mm)',
-#     'Height (mm)',
-#     'Side buttons'
-# ]
-# existing_features = [f for f in features if f in df.columns]
-
-# valid_counts = df_features.notna().sum()
-# total_counts = len(df_features)
-# percent_valid = (valid_counts / total_counts * 100).round(2)
-# percent_missing = (100 - percent_valid).round(2)
 
 
-# stats = pd.DataFrame({
-#     'Mean': df_copy.mean(),
-#     'Max': df_copy.max(),
-#     'Min': df_copy.min(),
-#     'StdDev': df_copy.std(),
-#     'Mode': df_copy.mode().iloc[0],
-#     '%Valid': percent_valid,
-#     '%Missing': percent_missing
-# }).round(2)
+
+features = [
+    'DPI',
+    'Polling rate (Hz)',
+    'Weight (grams)',
+    'Length (mm)',
+    'Width (mm)',
+    'Height (mm)',
+    'Side buttons'
+]
+existing_features = [f for f in features if f in df.columns]
+print("✅ Columns found:", existing_features)
+
+
+
+# ---------------------------------------- delete duplicate data ---------------------------------------
+    
+
+
+
+# คิดค่าต้นฉบับ
+df_features = df[existing_features].copy()
+valid_counts = df_features.notna().sum()
+total_counts = len(df_features)
+percent_valid = (valid_counts / total_counts * 100).round(2)
+percent_missing = (100 - percent_valid).round(2)
+
+
+stats = pd.DataFrame({
+    'Mean': df_features.mean(),
+    'Max': df_features.max(),
+    'Min': df_features.min(),
+    'StdDev': df_features.std(),
+    'Mode': df_features.mode().iloc[0],
+    '%Valid': percent_valid,
+    '%Missing': percent_missing 
+}).round(2)
+
+# แสดงผล
+print("✅ Statistical Summary of Selected Features:")
+print(stats)
+
+
+# สเกลข้อมูลให้ mean = 0 s.d. = 1 และเติมข้อมูลที่ว่างด้วยค่า mean ของ col นั้น
+imputer = SimpleImputer(strategy='mean')
+df_imputed = pd.DataFrame(imputer.fit_transform(df_features), columns=existing_features)
+scaler = StandardScaler()
+df_scaled = pd.DataFrame(scaler.fit_transform(df_imputed), columns=existing_features)
+
+print("\n✅ Data after imputation and scaling:")
+display(df_scaled.head())
+
 
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------
