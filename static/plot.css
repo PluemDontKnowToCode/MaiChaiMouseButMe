@@ -67,7 +67,9 @@ h1, h2 {
 
 
 table {
-    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    width: 90%;
     border-collapse: separate;
     border-spacing: 0;
     margin-top: 24px;
@@ -77,6 +79,7 @@ table {
     overflow: hidden;
     border: 1.5px solid #00ffea33;
     backdrop-filter: blur(4px);
+    margin-bottom: 20px;
 }
 
 
@@ -90,12 +93,13 @@ th, td {
 
 
 th {
-    background: linear-gradient(90deg, #00ffea 0%, #232526 100%);
-    color: #181a1b;
+    background: linear-gradient(90deg, #5b5b5b 0%, #232526 100%);
+    color: #d9dddf;
     font-weight: bold;
     text-shadow: 0 1px 8px #00ffea88;
     letter-spacing: 1.5px;
     border-top: 1.5px solid #00ffea44;
+    
 }
 
 

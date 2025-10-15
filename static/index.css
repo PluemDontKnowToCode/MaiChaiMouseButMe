@@ -73,6 +73,7 @@ button {
     box-shadow: 0 2px 8px #00ffea55;
     margin-bottom: 20px;
     transition: transform 0.1s;
+    margin-top: 12px;
 }
 
 button:hover {
@@ -89,9 +90,8 @@ button:hover {
     border-radius: 8px;
 }
 #process-mouse { 
+    margin-top: 10px;
     display: block;
-    margin-top: 20px;
-    margin-left: auto;
 }
 .add-label {
     font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
@@ -181,4 +181,23 @@ button:hover {
 #suggestions div:hover {
     background: #00ffea22;
     box-shadow: 0 2px 8px #00ffea55;
+}
+
+#myCollection {
+    margin-top: 20px;
+}
+.add-mouse {
+    background: linear-gradient(90deg, #28a745 0%, #218838 100%);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 32px;
+    font-size: 1.15em;
+    font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+    cursor: pointer;
+    box-shadow: 0 2px 12px #00ffea88;
+    margin-bottom: 22px;
+    margin-top: 12px;
+    transition: transform 0.12s, background 0.22s, box-shadow 0.22s;
+    border: 1.5px solid #28a74544;
 }
