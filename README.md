@@ -1,9 +1,17 @@
 # MaiChaiMouseButMe
-
 Analyze and visualize gaming mouse specs using PCA (Principal Component Analysis).
 
 ## Project Overview
 MaiChaiMouseButMe is a web app for exploring, searching, and analyzing gaming mouse data. It uses PCA to help you find the best mouse for your needs, compare models, and understand feature importance. Built for the course 01076032 Elementary Differential Equations and Linear Algebra.
+
+## Team Members
+
+| Name         | Student ID   |
+|--------------|--------------|
+| Nethitorn Suthumwaraporn  | 67010497 |
+| Paramed Rojlorsakul       | 67010534 |
+| Patcharapol Kumpichit     | 67010621 |
+| Teepob Mahasuk            | 67011464 |
 
 ## Features
 - Search and view mouse specs from a curated dataset
@@ -13,7 +21,7 @@ MaiChaiMouseButMe is a web app for exploring, searching, and analyzing gaming mo
 - Visualize PCA results and recommendations
 - Step-by-step PCA math explanation
 - Interactive Plotly graphs
-
+- 
 ## Dataset
 Source: [Kaggle - Gaming Mouse Specs](https://www.kaggle.com/datasets/ellimaaac/gaming-mouse-specs/data)
 
@@ -59,7 +67,7 @@ jupyter notebook main.ipynb
 - Add your own mouse to the collection
 - Select features and run PCA analysis
 - View recommendations and PCA math steps
-
+  
 ## Credits
 - Dataset: ellimaaac (Kaggle)
 - Author: PluemDontKnowToCode
