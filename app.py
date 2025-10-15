@@ -107,9 +107,9 @@ def process_mouse():
 
     # น่าจะต้องเอาอก เพราะจะ clean data ข้างบน -------------------------------------------------------------------------------------------
     df_features = df_copy[existing_features].copy()
-    df_copy = pd.DataFrame(SimpleImputer(strategy='mean').fit_transform(df_features),
+    df_imputed = pd.DataFrame(SimpleImputer(strategy='mean').fit_transform(df_features),
                               columns=existing_features)
-    df_scaled = pd.DataFrame(StandardScaler().fit_transform(df_copy),
+    df_scaled = pd.DataFrame(StandardScaler().fit_transform(df_imputed),
                              columns=existing_features)
     
 
@@ -164,14 +164,14 @@ def pca_details_page():
     # เดี๋ยวมาจัดการตรวนี้อีกที เเบบลบ data ที่ซ้ำ --------------------------------------------------------------------------------
     # Step 2: Impute missing
     imputer = SimpleImputer(strategy='mean')
-    df_copy = pd.DataFrame(imputer.fit_transform(df_features), columns=selected_features)
+    df_imputed = pd.DataFrame(imputer.fit_transform(df_features), columns=selected_features)
     debug_steps.append({
         'topic': 'Step 2: After Imputation (mean)',
-        'detail': str(pd.concat([df_copy[['Model']], df_copy], axis=1).head())
+        'detail': str(pd.concat([df_copy[['Model']], df_imputed], axis=1).head())
     })
     # Step 3: Standardize
     scaler = StandardScaler()
-    df_scaled = pd.DataFrame(scaler.fit_transform(df_copy), columns=selected_features)
+    df_scaled = pd.DataFrame(scaler.fit_transform(df_imputed), columns=selected_features)
     debug_steps.append({
         'topic': 'Step 3: After Standardization',
         'detail': str(pd.concat([df_copy[['Model']], df_scaled], axis=1).head())
@@ -181,7 +181,7 @@ def pca_details_page():
 
 
     # Step 4: Center Data (Mean Shifting)
-    X = df_copy.values
+    X = df_imputed.values
     mu = np.mean(X, axis=0)
     X_centered = X - mu
     debug_steps.append({
