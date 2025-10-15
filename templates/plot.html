@@ -10,6 +10,15 @@
 </head>
 <body>
     <h1>ผลการวิเคราะห์ PCA ของข้อมูลเมาส์</h1>
+    {% if error %}
+      <div style="color:red;font-weight:bold;">{{ error }}</div>
+    {% endif %}
+    {% if debug_html %}
+      <div class="card" style="margin-bottom:32px;">{{ debug_html|safe }}</div>
+    {% endif %}
+    {% if result_table_html %}
+      <div class="card" style="margin-bottom:32px;">{{ result_table_html|safe }}</div>
+    {% endif %}
     <p id="description">กราฟนี้แสดงการกระจายของเมาส์ต่างๆ โดยใช้ 2 แกนคุณลักษณะหลัก</p>
     <div id="myDiv" style="width:100%; max-width: 900px; height:600px;"></div>
 

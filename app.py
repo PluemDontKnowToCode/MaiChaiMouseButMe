@@ -102,51 +102,93 @@ def process_mouse():
 
     return jsonify({'name':name,'selected_features':selected_features,'recommendations':result})
 
-
-# PCA details page
 @app.route('/pca-details-page')
 def pca_details_page():
-    
-    my_mouse_input = request.args.get('my_mouse_collection','')
-    features = request.args.get('features','')
+    my_mouse_input = request.args.get('my_mouse_collection', '')
+    features = request.args.get('features', '')
+
     selected_features = [f for f in features.split(',') if f in df_copy.columns]
     my_mouse_collection = [x.strip() for x in my_mouse_input.split(',') if x.strip()]
 
     if not selected_features:
-        return "<p>⚠️ No features selected.</p>"
+        return render_template('plot.html', error="⚠️ No features selected.")
 
+    debug_logs = []
+    # Step 1: Select columns
     df_features = df_copy[selected_features].copy()
-    df_imputed = pd.DataFrame(SimpleImputer(strategy='mean').fit_transform(df_features),
-                              columns=selected_features)
-    df_scaled = pd.DataFrame(StandardScaler().fit_transform(df_imputed),
-                             columns=selected_features)
+    debug_logs.append("🔹 Step 1: Selected Features\n" + str(pd.concat([df_copy[['Model']], df_features], axis=1).head()))
+    # Step 2: Impute missing
+    imputer = SimpleImputer(strategy='mean')
+    df_imputed = pd.DataFrame(imputer.fit_transform(df_features), columns=selected_features)
+    debug_logs.append("🔹 Step 2: After Imputation (mean)\n" + str(pd.concat([df_copy[['Model']], df_imputed], axis=1).head()))
+    # Step 3: Standardize
+    scaler = StandardScaler()
+    df_scaled = pd.DataFrame(scaler.fit_transform(df_imputed), columns=selected_features)
+    debug_logs.append("🔹 Step 3: After Standardization\n" + str(pd.concat([df_copy[['Model']], df_scaled], axis=1).head()))
+
+    # Step 4: Center Data (Mean Shifting)
+    X = df_imputed.values
+    mu = np.mean(X, axis=0)
+    X_centered = X - mu
+    debug_logs.append("🔹 Step 4: Center Data (Mean Shifting)\nX_centered = X - mu\nmu = " + str(mu) + "\nX_centered (first 5 rows):\n" + str(pd.DataFrame(X_centered[:5], columns=selected_features, index=df_copy['Model'][:5]).to_string()))
+
+    # Step 5: Covariance Matrix
+    cov_matrix = np.cov(X_centered, rowvar=False)
+    debug_logs.append("🔹 Step 5: Covariance Matrix\nC = (1/(n-1)) X_centered^T X_centered\nCovariance Matrix:\n" + str(np.round(cov_matrix, 4)))
+
+    # Step 6: Eigenvalues & Eigenvectors
+    eigvals, eigvecs = np.linalg.eig(cov_matrix)
+    debug_logs.append("🔹 Step 6: Eigenvalues & Eigenvectors\nnp.linalg.eig(C)\nEigenvalues:\n" + str(np.round(eigvals, 4)) + "\nEigenvectors (columns):\n" + str(np.round(eigvecs, 4)))
+
+    # Step 7: Sort Eigenvalues/Eigenvectors
+    idx = np.argsort(eigvals)[::-1]
+    eigvals_sorted = eigvals[idx]
+    eigvecs_sorted = eigvecs[:, idx]
+    debug_logs.append("🔹 Step 7: Sort Eigenvalues/Eigenvectors\nSorted Eigenvalues:\n" + str(np.round(eigvals_sorted, 4)) + "\nSorted Eigenvectors:\n" + str(np.round(eigvecs_sorted, 4)))
+
+    # Step 8: PCA Transform (Project data)
+    W_top = eigvecs_sorted[:, :2]
+    Z = np.dot(X_centered, W_top)
+    debug_logs.append("🔹 Step 8: PCA Transform\nZ = X_centered . W_top\nW_top (first 2 eigenvectors):\n" + str(np.round(W_top, 4)) + "\nZ (first 5 rows):\n" + str(pd.DataFrame(Z[:5], columns=['PC1','PC2'], index=df_copy['Model'][:5]).to_string()))
+
+    # Step 9: Fit sklearn PCA for comparison and downstream
     pca = PCA(n_components=2)
     pcs = pca.fit_transform(df_scaled)
-    df_pca = pd.DataFrame(pcs, columns=['PC1','PC2'])
-    df_pca['Model']=df_copy['Model']
-    df_pca['Brand']=df_copy['Brand']
+    df_pca = pd.DataFrame(pcs, columns=['PC1', 'PC2'])
+    df_pca['Model'] = df_copy['Model']
+    df_pca['Brand'] = df_copy['Brand']
+    debug_logs.append("🔹 Step 9: Sklearn PCA Components (PC1, PC2)\n" + str(df_pca.head()))
+    debug_logs.append(f"Explained Variance Ratio: {pca.explained_variance_ratio_}")
 
-   
-
+    # Step 10: Ideal Profile
     df_my = df_pca[df_pca['Model'].isin(my_mouse_collection)]
-    ideal_profile=df_my[['PC1','PC2']].mean().values
-    df_pca['Distance_to_Ideal']=np.linalg.norm(df_pca[['PC1','PC2']].values - ideal_profile, axis=1)
+    if df_my.empty:
+        return render_template('plot.html', error="⚠️ No matching models found in collection.")
+    ideal_profile = df_my[['PC1', 'PC2']].mean().values
+    debug_logs.append("🔹 Step 10: Ideal Profile (mean of selected)\n" + str(ideal_profile))
 
+    # Step 11: Euclidean Distance
+    df_pca['Distance_to_Ideal'] = np.linalg.norm(
+        df_pca[['PC1', 'PC2']].values - ideal_profile, axis=1
+    )
+    debug_logs.append("🔹 Step 11: Distance to Ideal (Euclidean)\n" + str(df_pca[['Model', 'Distance_to_Ideal']].head()))
 
+    # Step 12: Prepare Data
     table_data = df_pca.sort_values('Distance_to_Ideal').to_dict(orient='records')
     ideal_profile_data = ideal_profile.tolist()
-
     data_by_brand = {}
     for brand, group in df_pca.groupby('Brand'):
         data_by_brand[brand] = group[['PC1', 'PC2', 'Model']].to_dict(orient='records')
 
+    # Step-by-step explanation (Thai & English)
+    debug_html = "<br><br>".join([f"<pre>{log}</pre>" for log in debug_logs])
     return render_template(
-       'plot.html', 
+        'plot.html',
+        debug_html=debug_html,
+
         table_rows=table_data,
-        data_by_brand_json=data_by_brand, 
-        ideal_profile_json=ideal_profile_data) 
-
-
-
+        data_by_brand_json=data_by_brand,
+        ideal_profile_json=ideal_profile_data
+    )
 if __name__=='__main__':
     app.run(debug=True)
