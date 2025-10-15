@@ -66,18 +66,62 @@ nameInput.addEventListener('input', async () => {
 
         data.forEach(item=>{
             const div = document.createElement('div');
-            div.textContent = `${item.Model} (${item.Brand})`;
+            // Left: Model (Brand)
+            const infoSpan = document.createElement('span');
+            infoSpan.textContent = `${item.Model} (${item.Brand})`;
+            div.appendChild(infoSpan);
 
-            const btn = document.createElement('button');
-            btn.textContent = 'Add';
-            btn.onclick = (e) => {
+            // Add button
+            const addBtn = document.createElement('button');
+            addBtn.textContent = 'Add';
+            addBtn.onclick = (e) => {
                 e.stopPropagation();
                 if(!myCollection.includes(item.Model)){
                     myCollection.push(item.Model);
                     renderCollection();
                 }
             };
-            div.appendChild(btn);
+            div.appendChild(addBtn);
+
+            // Detail button
+            const detailBtn = document.createElement('button');
+            detailBtn.textContent = 'Detail';
+            detailBtn.style.marginLeft = '8px';
+            detailBtn.onclick = async (e) => {
+                e.stopPropagation();
+                // Build decorated modal
+                let detailHtml = `<div id='mouseDetailModal' style='position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.45);z-index:9999;display:flex;align-items:center;justify-content:center;'>`;
+                detailHtml += `<div style='background:#181a1b;border-radius:18px;box-shadow:0 8px 32px #00ffea55;padding:32px 38px;min-width:320px;max-width:90vw;color:#00ffea;font-family:Orbitron,Segoe UI,Arial,sans-serif;position:relative;'>`;
+                detailHtml += `<button id='closeDetailModal' style='position:absolute;top:12px;right:18px;background:#ff0057;color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:1em;cursor:pointer;'>✖</button>`;
+                detailHtml += `<h2 style='margin-top:0;margin-bottom:18px;color:#00ffea;text-shadow:0 2px 8px #222;'>${item.Model}</h2>`;
+                detailHtml += `<h3 style='margin:0 0 18px 0;color:#fff;font-weight:normal;'>Brand: <span style='color:#00ffea;'>${item.Brand}</span></h3>`;
+                detailHtml += `<table style='width:100%;border-collapse:collapse;background:transparent;color:#fff;'>`;
+                detailHtml += `<tr><td style='padding:8px 12px;'>DPI</td><td style='padding:8px 12px;color:#00ffea;'>${item.DPI ?? '-'}</td></tr>`;
+                detailHtml += `<tr><td style='padding:8px 12px;'>Polling rate (Hz)</td><td style='padding:8px 12px;color:#00ffea;'>${item['Polling rate (Hz)'] ?? '-'}</td></tr>`;
+                detailHtml += `<tr><td style='padding:8px 12px;'>Weight (grams)</td><td style='padding:8px 12px;color:#00ffea;'>${item['Weight (grams)'] ?? '-'}</td></tr>`;
+                detailHtml += `<tr><td style='padding:8px 12px;'>Length (mm)</td><td style='padding:8px 12px;color:#00ffea;'>${item['Length (mm)'] ?? '-'}</td></tr>`;
+                detailHtml += `<tr><td style='padding:8px 12px;'>Width (mm)</td><td style='padding:8px 12px;color:#00ffea;'>${item['Width (mm)'] ?? '-'}</td></tr>`;
+                detailHtml += `<tr><td style='padding:8px 12px;'>Height (mm)</td><td style='padding:8px 12px;color:#00ffea;'>${item['Height (mm)'] ?? '-'}</td></tr>`;
+                detailHtml += `<tr><td style='padding:8px 12px;'>Side buttons</td><td style='padding:8px 12px;color:#00ffea;'>${item['Side buttons'] ?? '-'}</td></tr>`;
+                detailHtml += `</table>`;
+                detailHtml += `</div></div>`;
+                // Insert modal into DOM
+                const modalDiv = document.createElement('div');
+                modalDiv.innerHTML = detailHtml;
+                document.body.appendChild(modalDiv);
+                // Close handler
+                modalDiv.querySelector('#closeDetailModal').onclick = () => {
+                    document.body.removeChild(modalDiv);
+                };
+                // Also close on background click
+                modalDiv.querySelector('#mouseDetailModal').onclick = (ev) => {
+                    if(ev.target === modalDiv.querySelector('#mouseDetailModal')){
+                        document.body.removeChild(modalDiv);
+                    }
+                };
+            };
+            div.appendChild(detailBtn);
+
             suggestionsBox.appendChild(div);
 
             div.onclick = () => { nameInput.value = item.Model; suggestionsBox.style.display='none'; };

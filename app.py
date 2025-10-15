@@ -29,8 +29,10 @@ def search_mouse():
             df_copy['Brand'].str.lower().str.contains(query, na=False))
     results = df_copy[mask]
     if results.empty:
-        return jsonify({'message':'❌ No matching mouse found'})
-    return jsonify(results[['Model','Brand']].to_dict   (orient='records'))
+        return jsonify({'message':'No matching mouse found'})
+    # Return all details needed for the detail popup
+    detail_cols = ['Model','Brand','DPI','Polling rate (Hz)','Weight (grams)','Length (mm)','Width (mm)','Height (mm)','Side buttons']
+    return jsonify(results[detail_cols].to_dict(orient='records'))
 
 # Add new mouse
 @app.route('/add', methods=['POST'])
@@ -58,7 +60,7 @@ def add_mouse():
     new_row = pd.DataFrame([data])
     df_copy = pd.concat([df_copy,new_row], ignore_index=True)
     df_copy.to_csv('mouse_data_copy.csv', sep=';', index=False)
-    return jsonify({'success':f"✅ Added '{data['Model']}' to dataset copy!"})
+    return jsonify({'success':f" Added '{data['Model']}' to dataset"})
 
 # Process PCA + Top 5 recommendations
 @app.route('/process', methods=['POST'])
