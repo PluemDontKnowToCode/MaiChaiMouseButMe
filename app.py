@@ -113,43 +113,67 @@ def pca_details_page():
     if not selected_features:
         return render_template('plot.html', error="⚠️ No features selected.")
 
-    debug_logs = []
+    debug_steps = []
     # Step 1: Select columns
     df_features = df_copy[selected_features].copy()
-    debug_logs.append("🔹 Step 1: Selected Features\n" + str(pd.concat([df_copy[['Model']], df_features], axis=1).head()))
+    debug_steps.append({
+        'topic': 'Step 1: Selected Features',
+        'detail': str(pd.concat([df_copy[['Model']], df_features], axis=1).head())
+    })
     # Step 2: Impute missing
     imputer = SimpleImputer(strategy='mean')
     df_imputed = pd.DataFrame(imputer.fit_transform(df_features), columns=selected_features)
-    debug_logs.append("🔹 Step 2: After Imputation (mean)\n" + str(pd.concat([df_copy[['Model']], df_imputed], axis=1).head()))
+    debug_steps.append({
+        'topic': 'Step 2: After Imputation (mean)',
+        'detail': str(pd.concat([df_copy[['Model']], df_imputed], axis=1).head())
+    })
     # Step 3: Standardize
     scaler = StandardScaler()
     df_scaled = pd.DataFrame(scaler.fit_transform(df_imputed), columns=selected_features)
-    debug_logs.append("🔹 Step 3: After Standardization\n" + str(pd.concat([df_copy[['Model']], df_scaled], axis=1).head()))
+    debug_steps.append({
+        'topic': 'Step 3: After Standardization',
+        'detail': str(pd.concat([df_copy[['Model']], df_scaled], axis=1).head())
+    })
 
     # Step 4: Center Data (Mean Shifting)
     X = df_imputed.values
     mu = np.mean(X, axis=0)
     X_centered = X - mu
-    debug_logs.append("🔹 Step 4: Center Data (Mean Shifting)\nX_centered = X - mu\nmu = " + str(mu) + "\nX_centered (first 5 rows):\n" + str(pd.DataFrame(X_centered[:5], columns=selected_features, index=df_copy['Model'][:5]).to_string()))
+    debug_steps.append({
+        'topic': 'Step 4: Center Data (Mean Shifting)',
+        'detail': f"X_centered = X - mu\nmu = {mu}\nX_centered (first 5 rows):\n" + str(pd.DataFrame(X_centered[:5], columns=selected_features, index=df_copy['Model'][:5]).to_string())
+    })
 
     # Step 5: Covariance Matrix
     cov_matrix = np.cov(X_centered, rowvar=False)
-    debug_logs.append("🔹 Step 5: Covariance Matrix\nC = (1/(n-1)) X_centered^T X_centered\nCovariance Matrix:\n" + str(np.round(cov_matrix, 4)))
+    debug_steps.append({
+        'topic': 'Step 5: Covariance Matrix',
+        'detail': f"C = (1/(n-1)) X_centered^T X_centered\nCovariance Matrix:\n" + str(np.round(cov_matrix, 4))
+    })
 
     # Step 6: Eigenvalues & Eigenvectors
     eigvals, eigvecs = np.linalg.eig(cov_matrix)
-    debug_logs.append("🔹 Step 6: Eigenvalues & Eigenvectors\nnp.linalg.eig(C)\nEigenvalues:\n" + str(np.round(eigvals, 4)) + "\nEigenvectors (columns):\n" + str(np.round(eigvecs, 4)))
+    debug_steps.append({
+        'topic': 'Step 6: Eigenvalues & Eigenvectors',
+        'detail': f"np.linalg.eig(C)\nEigenvalues:\n{np.round(eigvals, 4)}\nEigenvectors (columns):\n{np.round(eigvecs, 4)}"
+    })
 
     # Step 7: Sort Eigenvalues/Eigenvectors
     idx = np.argsort(eigvals)[::-1]
     eigvals_sorted = eigvals[idx]
     eigvecs_sorted = eigvecs[:, idx]
-    debug_logs.append("🔹 Step 7: Sort Eigenvalues/Eigenvectors\nSorted Eigenvalues:\n" + str(np.round(eigvals_sorted, 4)) + "\nSorted Eigenvectors:\n" + str(np.round(eigvecs_sorted, 4)))
+    debug_steps.append({
+        'topic': 'Step 7: Sort Eigenvalues/Eigenvectors',
+        'detail': f"Sorted Eigenvalues:\n{np.round(eigvals_sorted, 4)}\nSorted Eigenvectors:\n{np.round(eigvecs_sorted, 4)}"
+    })
 
     # Step 8: PCA Transform (Project data)
     W_top = eigvecs_sorted[:, :2]
     Z = np.dot(X_centered, W_top)
-    debug_logs.append("🔹 Step 8: PCA Transform\nZ = X_centered . W_top\nW_top (first 2 eigenvectors):\n" + str(np.round(W_top, 4)) + "\nZ (first 5 rows):\n" + str(pd.DataFrame(Z[:5], columns=['PC1','PC2'], index=df_copy['Model'][:5]).to_string()))
+    debug_steps.append({
+        'topic': 'Step 8: PCA Transform',
+        'detail': f"Z = X_centered . W_top\nW_top (first 2 eigenvectors):\n{np.round(W_top, 4)}\nZ (first 5 rows):\n" + str(pd.DataFrame(Z[:5], columns=['PC1','PC2'], index=df_copy['Model'][:5]).to_string())
+    })
 
     # Step 9: Fit sklearn PCA for comparison and downstream
     pca = PCA(n_components=2)
@@ -157,21 +181,30 @@ def pca_details_page():
     df_pca = pd.DataFrame(pcs, columns=['PC1', 'PC2'])
     df_pca['Model'] = df_copy['Model']
     df_pca['Brand'] = df_copy['Brand']
-    debug_logs.append("🔹 Step 9: Sklearn PCA Components (PC1, PC2)\n" + str(df_pca.head()))
-    debug_logs.append(f"Explained Variance Ratio: {pca.explained_variance_ratio_}")
+    debug_steps.append({
+        'topic': 'Step 9: Sklearn PCA Components (PC1, PC2)',
+        'detail': str(df_pca.head())
+    })
+    
 
     # Step 10: Ideal Profile
     df_my = df_pca[df_pca['Model'].isin(my_mouse_collection)]
     if df_my.empty:
         return render_template('plot.html', error="⚠️ No matching models found in collection.")
     ideal_profile = df_my[['PC1', 'PC2']].mean().values
-    debug_logs.append("🔹 Step 10: Ideal Profile (mean of selected)\n" + str(ideal_profile))
+    debug_steps.append({
+        'topic': 'Step 10: Ideal Profile (mean of selected)',
+        'detail': str(ideal_profile)
+    })
 
     # Step 11: Euclidean Distance
     df_pca['Distance_to_Ideal'] = np.linalg.norm(
         df_pca[['PC1', 'PC2']].values - ideal_profile, axis=1
     )
-    debug_logs.append("🔹 Step 11: Distance to Ideal (Euclidean)\n" + str(df_pca[['Model', 'Distance_to_Ideal']].head()))
+    debug_steps.append({
+        'topic': 'Step 11: Distance to Ideal (Euclidean)',
+        'detail': str(df_pca[['Model', 'Distance_to_Ideal']].head())
+    })
 
     # Step 12: Prepare Data
     table_data = df_pca.sort_values('Distance_to_Ideal').to_dict(orient='records')
@@ -181,7 +214,10 @@ def pca_details_page():
         data_by_brand[brand] = group[['PC1', 'PC2', 'Model']].to_dict(orient='records')
 
     # Step-by-step explanation (Thai & English)
-    debug_html = "<br><br>".join([f"<pre>{log}</pre>" for log in debug_logs])
+    debug_html = "<br><br>".join([
+        f'<div class="pca-topic">{step["topic"]}</div><pre class="pca-detail">{step["detail"]}</pre>'
+        for step in debug_steps
+    ])
     return render_template(
         'plot.html',
         debug_html=debug_html,
