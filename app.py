@@ -1,3 +1,18 @@
+from flask import Flask, render_template, request, jsonify
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
+from sklearn.decomposition import PCA
+import numpy as np
+import json
+
+app = Flask(__name__)
+
+# โหลด dataset และทำ copy สำหรับแก้ไข
+df = pd.read_csv('2025_09_06_MousedB.csv', sep=';')
+df_copy = df.copy()
+
+# -------------------------------------------------------------------- clean data ------------------------------------------------------
 def clean_mouse_data(df, features):
     """
     Clean mouse data by:
@@ -26,22 +41,6 @@ def clean_mouse_data(df, features):
     df_features = df_combined[features].copy()
     df_clean = df_combined[['Model', 'Brand'] + features].copy()
     return df_features, df_clean
-from flask import Flask, render_template, request, jsonify
-import pandas as pd
-from sklearn.preprocessing import StandardScaler
-from sklearn.impute import SimpleImputer
-from sklearn.decomposition import PCA
-import numpy as np
-import json
-
-app = Flask(__name__)
-
-# โหลด dataset และทำ copy สำหรับแก้ไข
-df = pd.read_csv('2025_09_06_MousedB.csv', sep=';')
-df_copy = df.copy()
-
-# -------------------------------------------------------------------- clean data ------------------------------------------------------
-
 # # feature ที่จะใช้ 
 # features = [
 #     'DPI',
