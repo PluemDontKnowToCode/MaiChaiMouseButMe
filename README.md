@@ -66,9 +66,3 @@ jupyter notebook main.ipynb
 
 ## License
 For educational use in 01076032 course.
-```
-```bash
-   # linux
-   jupyter notebook main.ipynb
-```
-
