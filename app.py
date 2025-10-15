@@ -1,3 +1,31 @@
+def clean_mouse_data(df, features):
+    """
+    Clean mouse data by:
+    1. Removing rows for models that have both missing and non-missing data, keeping only the complete row.
+    2. Combining brands for identical models with same features but different brands.
+    Returns cleaned df_features and df_copy_clean.
+    """
+    df_features = df[features].copy()
+    missing_mask = df_features.isnull().any(axis=1)
+    models_with_missing = set(df.loc[missing_mask, 'Model'])
+    complete_mask = ~df_features.isnull().any(axis=1)
+    models_with_complete = set(df.loc[complete_mask, 'Model'])
+    duplicate_models = models_with_missing & models_with_complete
+    drop_idx = df.index[missing_mask & df['Model'].isin(duplicate_models)]
+    df_features = df_features.drop(index=drop_idx)
+    df_clean = df.drop(index=drop_idx)
+    df_full = df_clean[['Model', 'Brand'] + features].copy()
+    grouped = df_full.groupby(['Model'] + features, dropna=False)
+    combined_rows = []
+    for _, group in grouped:
+        brands = ', '.join(sorted(set(group['Brand'])))
+        row = group.iloc[0].copy()
+        row['Brand'] = brands
+        combined_rows.append(row)
+    df_combined = pd.DataFrame(combined_rows)
+    df_features = df_combined[features].copy()
+    df_clean = df_combined[['Model', 'Brand'] + features].copy()
+    return df_features, df_clean
 from flask import Flask, render_template, request, jsonify
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -106,29 +134,8 @@ def process_mouse():
         return jsonify({'result':'⚠️ ไม่ได้เลือกคุณสมบัติใดๆ'})
 
     # น่าจะต้องเอาอก เพราะจะ clean data ข้างบน -------------------------------------------------------------------------------------------
-    # --- Clean data: remove rows for models that have both missing and non-missing data, keeping only the complete row ---
-    df_features = df_copy[existing_features].copy()
-    missing_mask = df_features.isnull().any(axis=1)
-    models_with_missing = set(df_copy.loc[missing_mask, 'Model'])
-    complete_mask = ~df_features.isnull().any(axis=1)
-    models_with_complete = set(df_copy.loc[complete_mask, 'Model'])
-    duplicate_models = models_with_missing & models_with_complete
-    drop_idx = df_copy.index[missing_mask & df_copy['Model'].isin(duplicate_models)]
-    df_features = df_features.drop(index=drop_idx)
-    df_copy_clean = df_copy.drop(index=drop_idx)
-
-    # --- Combine brands for identical models with same features but different brands ---
-    df_full = df_copy_clean[['Model', 'Brand'] + existing_features].copy()
-    grouped = df_full.groupby(['Model'] + existing_features, dropna=False)
-    combined_rows = []
-    for _, group in grouped:
-        brands = ', '.join(sorted(set(group['Brand'])))
-        row = group.iloc[0].copy()
-        row['Brand'] = brands
-        combined_rows.append(row)
-    df_combined = pd.DataFrame(combined_rows)
-    df_features = df_combined[existing_features].copy()
-    df_copy_clean = df_combined[['Model', 'Brand'] + existing_features].copy()
+    # Clean and combine brands
+    df_features, df_copy_clean = clean_mouse_data(df_copy, existing_features)
 
     # --- Impute and scale ---
     df_imputed = pd.DataFrame(SimpleImputer(strategy='mean').fit_transform(df_features),
@@ -177,36 +184,8 @@ def pca_details_page():
         return render_template('plot.html', error="⚠️ No features selected.")
 
     debug_steps = []
-    # Step 1: Select columns
-    # Clean data: remove rows for models that have both missing and non-missing data, keeping only the complete row
-    df_features = df_copy[selected_features].copy()
-    # Find models with missing data
-    missing_mask = df_features.isnull().any(axis=1)
-    models_with_missing = set(df_copy.loc[missing_mask, 'Model'])
-    # Find models with complete data
-    complete_mask = ~df_features.isnull().any(axis=1)
-    models_with_complete = set(df_copy.loc[complete_mask, 'Model'])
-    # Models that have both missing and complete rows
-    duplicate_models = models_with_missing & models_with_complete
-    # Remove rows for these models where data is missing
-    drop_idx = df_copy.index[missing_mask & df_copy['Model'].isin(duplicate_models)]
-    df_features = df_features.drop(index=drop_idx)
-    df_copy_clean = df_copy.drop(index=drop_idx)
-    # Combine brands for identical models with same features but different brands
-    # Only consider rows with complete data
-    df_full = df_copy_clean[['Model', 'Brand'] + selected_features].copy()
-    # Group by Model and feature values
-    grouped = df_full.groupby(['Model'] + selected_features, dropna=False)
-    combined_rows = []
-    for _, group in grouped:
-        brands = ', '.join(sorted(set(group['Brand'])))
-        row = group.iloc[0].copy()
-        row['Brand'] = brands
-        combined_rows.append(row)
-    df_combined = pd.DataFrame(combined_rows)
-    # Update df_features and df_copy_clean for further steps
-    df_features = df_combined[selected_features].copy()
-    df_copy_clean = df_combined[['Model', 'Brand'] + selected_features].copy()
+    # Step 1: Select columns and clean data
+    df_features, df_copy_clean = clean_mouse_data(df_copy, selected_features)
     # ...existing code...
     valid_counts = df_features.notna().sum()
     total_counts = len(df_features)
