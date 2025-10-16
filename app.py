@@ -271,8 +271,8 @@ def pca_details_page():
     pca = PCA(n_components=2)
     pcs = pca.fit_transform(df_scaled)
     df_pca = pd.DataFrame(pcs, columns=['PC1', 'PC2'])
-    df_pca['Model'] = df_copy['Model']
-    df_pca['Brand'] = df_copy['Brand']
+    df_pca['Model'] = df_copy_clean['Model']
+    df_pca['Brand'] = df_copy_clean['Brand']
     debug_steps.append({
         'topic': 'Step 9: Sklearn PCA Components (PC1, PC2)',
         'detail': str(df_pca.head())
