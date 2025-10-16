@@ -158,7 +158,7 @@ button:hover {
 
 #suggestions div button {
     margin-left: 18px;
-    background: linear-gradient(90deg, #00ffea 0%, #ff0057 100%);
+    background: linear-gradient(90deg, #00ffea 0%, #1c7bff 100%);
     color: #fff;
     border: none;
     border-radius: 6px;
@@ -170,7 +170,7 @@ button:hover {
     transition: background 0.2s, transform 0.1s;
 }
 #suggestions div button:hover {
-    background: linear-gradient(90deg, #ff0057 0%, #00ffea 100%);
+    background: linear-gradient(90deg, #1c7bff 0%, #00ffea 100%);
     transform: scale(1.08);
 }
 
