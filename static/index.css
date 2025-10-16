@@ -62,7 +62,7 @@ tr:hover {
 }
 
 button {
-    background: linear-gradient(90deg, #ff0057 0%, #00ffea 100%);
+    background: linear-gradient(90deg, #1c7bff 0%, #00ffea 100%);
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -78,7 +78,7 @@ button {
 
 button:hover {
     transform: scale(1.07);
-    background: linear-gradient(90deg, #00ffea 0%, #ff0057 100%);
+    background: linear-gradient(90deg, #00ffea 0%, #1c7bff 100%);
 }
 
 ::-webkit-scrollbar {
